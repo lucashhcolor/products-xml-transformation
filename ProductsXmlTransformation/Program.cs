@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Configuration;
 using System.Xml;
+using System.IO;
 
 namespace ProductsXmlTransformation
 {
@@ -13,38 +14,53 @@ namespace ProductsXmlTransformation
         public static string ProductsXmlFilePath;
         public static string OutputRootDirectory;
         public static XmlDocument ProductsXmlDocument;
+        public static StringBuilder ErrorText;
         static void Main(string[] args)
         {
             ProductsXmlFilePath = ConfigurationManager.AppSettings["ProductsXmlFilePath"];
             OutputRootDirectory = ConfigurationManager.AppSettings["OutputRootDirectory"];
+            ErrorText = new StringBuilder();
 
             ProductsXmlDocument = new XmlDocument();
             ProductsXmlDocument.Load(ProductsXmlFilePath);
 
+            var productCount = 0;
             var productXmlDocumentsGenerated = 0;
 
             foreach (XmlNode productProductsXml in ProductsXmlDocument.SelectNodes("/ProductFile/Products/Product"))
             {
                 try
                 {
+                    productCount++;
                     GenerateProductXmlFile(productProductsXml);
                     productXmlDocumentsGenerated++;
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("Error encountered creating Product XML file for Product {0}.", productProductsXml.Attributes["prodId"].Value);
-                    Console.WriteLine("Message: {0}", ex.Message);
-                    Console.WriteLine("StackTrace: {0}", ex.StackTrace);
-                    Console.WriteLine();
+                    ErrorText.AppendLine(string.Format("Error encountered creating Product XML file for Product {0}.", productProductsXml.Attributes["prodId"].Value));
+                    ErrorText.AppendLine(string.Format("Message: {0}", ex.Message));
+                    ErrorText.AppendLine(string.Format("StackTrace: {0}", ex.StackTrace));
+                    ErrorText.AppendLine();
                 }
             }
 
             Console.WriteLine("{0} Product XML documents generated.", productXmlDocumentsGenerated);
+            if (ErrorText.Length > 0)
+            {
+                using (StreamWriter writer = new StreamWriter(OutputRootDirectory + "Errors.txt"))
+                {
+                    writer.WriteLine(ErrorText.ToString());
+                }
+                Console.WriteLine("Failed to generate {0} product XML files.", productCount - productXmlDocumentsGenerated);
+                Console.WriteLine("See file Errors.txt located in output directory for details.");
+            }
             Console.ReadKey();
         }
 
         public static void GenerateProductXmlFile(XmlNode productProductsXml)
         {
+            var productId = productProductsXml.Attributes["prodId"].Value;
+
             XmlDocument doc = new XmlDocument();
 
             XmlDeclaration xmlDeclaration = doc.CreateXmlDeclaration("1.0", "utf-8", null);
@@ -54,6 +70,7 @@ namespace ProductsXmlTransformation
             // root node of document: <Product>
             XmlElement productElement = doc.CreateElement("Product");
             productElement.SetAttribute("name", productProductsXml.Attributes["name"].Value);
+            
             //TODO: how do we identify the class the product should use?
             productElement.SetAttribute("class", "");
             doc.AppendChild(productElement);
@@ -76,7 +93,10 @@ namespace ProductsXmlTransformation
                 XmlElement valueElement = doc.CreateElement("Value");
                 valueElement.SetAttribute("id", paperNodeProductsXml.Attributes["id"].Value);
                 valueElement.SetAttribute("name", paperNodeProductsXml.Attributes["name"].Value);
-                valueElement.SetAttribute("dp2Product", paperNodeProductsXml.Attributes["layout"].Value);
+                if (paperNodeProductsXml.Attributes["layout"] != null)
+                {
+                    valueElement.SetAttribute("dp2Product", paperNodeProductsXml.Attributes["layout"].Value);
+                }
                 if (paperNodeProductsXml.Attributes["iccprofile"] != null)
                 {
                     valueElement.SetAttribute("iccProfile", paperNodeProductsXml.Attributes["iccprofile"].Value);
@@ -104,10 +124,9 @@ namespace ProductsXmlTransformation
 
             // get template nodes for Product in Products.xml
             var templateNodesProductsXml = productProductsXml.SelectNodes("Template");
-            XmlElement optionElement2;
             if (templateNodesProductsXml.Count > 0)
             {
-                optionElement2 = doc.CreateElement("Option");
+                XmlElement optionElement2 = doc.CreateElement("Option");
                 optionElement2.SetAttribute("id", "Template");
                 optionElement2.SetAttribute("name", "Template");
                 //TODO: shouldn't 1 template be required? FunPak.xml has min=0 and max=0
@@ -130,7 +149,16 @@ namespace ProductsXmlTransformation
                         XmlElement textNodesElement = doc.CreateElement("TextNodes");
                         foreach (XmlNode textNodeProductsXml in templateNodeProductsXml.SelectNodes("TextNodes/TextNode"))
                         {
-
+                            XmlElement textNodeElement = doc.CreateElement("TextNode");
+                            if (textNodeProductsXml.Attributes["textLine"] != null)
+                            {
+                                textNodeElement.SetAttribute("textLine", textNodeProductsXml.Attributes["textLine"].Value);
+                            }
+                            if (textNodeProductsXml.Attributes["limit"] != null)
+                            {
+                                textNodeElement.SetAttribute("limit", textNodeProductsXml.Attributes["limit"].Value);
+                            }
+                            textNodesElement.AppendChild(textNodeElement);
                         }
                         valueElement.AppendChild(textNodesElement);
                     }
@@ -142,9 +170,10 @@ namespace ProductsXmlTransformation
                         {
                             XmlElement textNodeElement = doc.CreateElement("TextNode");
                             textNodeElement.SetAttribute("textLine", i.ToString());
-                            if (templateNodeProductsXml.Attributes[string.Format("textNodeLimit{0}", i)] != null)
+                            var textNodeLimitAttributeName = string.Format("textNodeLimit{0}", i);
+                            if (templateNodeProductsXml.Attributes[textNodeLimitAttributeName] != null)
                             {
-                                textNodeElement.SetAttribute("limit", templateNodeProductsXml.Attributes[string.Format("textNodeLimit{0}", i)].Value);
+                                textNodeElement.SetAttribute("limit", templateNodeProductsXml.Attributes[textNodeLimitAttributeName].Value);
                             }
                             textNodesElement.AppendChild(textNodeElement);
                         }
@@ -152,6 +181,49 @@ namespace ProductsXmlTransformation
                     }
                 }
             }
+
+            // add any Supply Sheet information from Products.xml
+            var xPathProductAssemblySupply = string.Format("/ProductFile/ProductAssemblySupplies/ProductAssemblySupply[@name = '{0}']", productId);
+            if (ProductsXmlDocument.SelectSingleNode(xPathProductAssemblySupply) != null)
+            {
+                var productAssemblySupplyProductsXml = ProductsXmlDocument.SelectSingleNode(xPathProductAssemblySupply);
+                XmlElement supplySheetElement = doc.CreateElement("SupplySheet");
+
+                // attribute values of the ProductAssemblySupply node are used in MakeTask, ex. assemblyType
+                foreach (XmlAttribute supplyAttributeProductsXml in productAssemblySupplyProductsXml.Attributes)
+                {
+                    // type attribute value is always "ProdId"
+                    if (supplyAttributeProductsXml.Name != "type")
+                    {
+                        supplySheetElement.SetAttribute(supplyAttributeProductsXml.Name, supplyAttributeProductsXml.Value);
+                    }
+                }
+                productElement.AppendChild(supplySheetElement);
+
+                // add values from ProductAssemblySupply/AssemblySupply nodes in Products.xml
+                foreach (XmlNode assemblySupplyProductsXml in productAssemblySupplyProductsXml.SelectNodes("AssemblySupply"))
+                {
+                    XmlElement supplySheetValue = doc.CreateElement("Value");
+                    supplySheetValue.SetAttribute("name", assemblySupplyProductsXml.Attributes["name"].Value);
+                    supplySheetValue.SetAttribute("quantity", assemblySupplyProductsXml.Attributes["quantity"].Value);
+                    supplySheetValue.SetAttribute("perImagesOrdered", assemblySupplyProductsXml.Attributes["perImagesOrdered"].Value);
+                    supplySheetElement.AppendChild(supplySheetValue);
+                }
+            }
+
+            // write individual product xml file
+            XmlWriterSettings settings = new XmlWriterSettings();
+            settings.Indent = true;
+            var filePath = OutputRootDirectory + RemoveInvalidCharactersFromFileName(productId) + ".xml";
+            using (XmlWriter writer = XmlWriter.Create(filePath, settings))
+            {
+                doc.Save(writer);
+            }
+        }
+
+        public static string RemoveInvalidCharactersFromFileName(string fileName)
+        {
+            return fileName.Replace("/", "");
         }
     }
 }
