@@ -70,9 +70,53 @@ namespace ProductsXmlTransformation
             // root node of document: <Product>
             XmlElement productElement = doc.CreateElement("Product");
             productElement.SetAttribute("name", productProductsXml.Attributes["name"].Value);
-            
+
+            var orderOptionXPath = string.Format("/ProductFile/OrderOptions/OrderOption[@id='{0}']", productId);
+            var productOrderOptionProductsXml = ProductsXmlDocument.SelectSingleNode(orderOptionXPath);
+            if ((productOrderOptionProductsXml != null) && (productOrderOptionProductsXml.Attributes["assemblyType"] != null))
+            {
+                productElement.SetAttribute("assemblyType", productOrderOptionProductsXml.Attributes["assemblyType"].Value);
+            }
+            if (productProductsXml.Attributes["category"] != null)
+            {
+                productElement.SetAttribute("category", productProductsXml.Attributes["category"].Value);
+            }
+            if (productProductsXml.Attributes["routeIndicator"] != null)
+            {
+                productElement.SetAttribute("routeIndicator", productProductsXml.Attributes["routeIndicator"].Value);
+            }
+            if (productProductsXml.Attributes["dymoProduct"] != null)
+            {
+                productElement.SetAttribute("dymoProduct", productProductsXml.Attributes["dymoProduct"].Value);
+            }
+            if (productProductsXml.Attributes["requires10x13Envelope"] != null)
+            {
+                productElement.SetAttribute("requires10x13Envelope", productProductsXml.Attributes["requires10x13Envelope"].Value);
+            }
+            if (productProductsXml.Attributes["printDp2Product"] != null)
+            {
+                productElement.SetAttribute("printDp2Product", productProductsXml.Attributes["printDp2Product"].Value);
+            }
+            if (productProductsXml.Attributes["printer"] != null)
+            {
+                productElement.SetAttribute("printer", productProductsXml.Attributes["printer"].Value);
+            }
+            if (productProductsXml.Attributes["queue"] != null)
+            {
+                productElement.SetAttribute("queue", productProductsXml.Attributes["queue"].Value);
+            }
+            if (productProductsXml.Attributes["theme"] != null)
+            {
+                productElement.SetAttribute("theme", productProductsXml.Attributes["theme"].Value);
+            }
+            if (productProductsXml.Attributes["useTemplatePricing"] != null)
+            {
+                productElement.SetAttribute("useTemplatePricing", productProductsXml.Attributes["useTemplatePricing"].Value);
+            }
+
             //TODO: how do we identify the class the product should use?
             productElement.SetAttribute("class", "");
+
             doc.AppendChild(productElement);
 
             XmlElement optionsElement = doc.CreateElement("Options");
@@ -104,6 +148,26 @@ namespace ProductsXmlTransformation
                 if (paperNodeProductsXml.Attributes["papersurface"] != null)
                 {
                     valueElement.SetAttribute("paperSurface", paperNodeProductsXml.Attributes["papersurface"].Value);
+                }
+                if (paperNodeProductsXml.Attributes["queuename"] != null)
+                {
+                    valueElement.SetAttribute("queuename", paperNodeProductsXml.Attributes["queuename"].Value);
+                }
+                if (paperNodeProductsXml.Attributes["dp2FrontierPrintCode"] != null)
+                {
+                    valueElement.SetAttribute("dp2FrontierPrintCode", paperNodeProductsXml.Attributes["dp2FrontierPrintCode"].Value);
+                }
+                if (paperNodeProductsXml.Attributes["jdfhp"] != null)
+                {
+                    valueElement.SetAttribute("jdfhp", paperNodeProductsXml.Attributes["jdfhp"].Value);
+                }
+                if (paperNodeProductsXml.Attributes["jdfxerox"] != null)
+                {
+                    valueElement.SetAttribute("jdfxerox", paperNodeProductsXml.Attributes["jdfxerox"].Value);
+                }
+                if (paperNodeProductsXml.Attributes["jdfpapercolor"] != null)
+                {
+                    valueElement.SetAttribute("jdfpapercolor", paperNodeProductsXml.Attributes["jdfpapercolor"].Value);
                 }
                 optionElement.AppendChild(valueElement);
 
@@ -141,6 +205,54 @@ namespace ProductsXmlTransformation
                     valueElement.SetAttribute("description", templateNodeProductsXml.Attributes["description"].Value);
                     // remove the file extension from the image attribute. some images contain '.' in their name.
                     valueElement.SetAttribute("dp2Product", templateNodeProductsXml.Attributes["image"].Value.Remove(templateNodeProductsXml.Attributes["image"].Value.LastIndexOf('.')));
+                    if (templateNodeProductsXml.Attributes["image2"] != null)
+                    {
+                        valueElement.SetAttribute("image2", templateNodeProductsXml.Attributes["image2"].Value);
+                    }
+                    if (templateNodeProductsXml.Attributes["dp2CreatePdfGroup"] != null)
+                    {
+                        valueElement.SetAttribute("dp2CreatePdfGroup", templateNodeProductsXml.Attributes["dp2CreatePdfGroup"].Value);
+                    }
+                    if (templateNodeProductsXml.Attributes["separateOrderItems"] != null)
+                    {
+                        valueElement.SetAttribute("separateOrderItems", templateNodeProductsXml.Attributes["separateOrderItems"].Value);
+                    }
+                    if (templateNodeProductsXml.Attributes["class"] != null)
+                    {
+                        valueElement.SetAttribute("class", templateNodeProductsXml.Attributes["class"].Value);
+                    }
+                    if (templateNodeProductsXml.Attributes["useFirstOrderItemImage"] != null)
+                    {
+                        valueElement.SetAttribute("useFirstOrderItemImage", templateNodeProductsXml.Attributes["useFirstOrderItemImage"].Value);
+                    }
+                    if (templateNodeProductsXml.Attributes["idCardPrinterDuplexed"] != null)
+                    {
+                        valueElement.SetAttribute("idCardPrinterDuplexed", templateNodeProductsXml.Attributes["idCardPrinterDuplexed"].Value);
+                    }
+                    if (templateNodeProductsXml.Attributes["routeIndicator"] != null)
+                    {
+                        valueElement.SetAttribute("routeIndicator", templateNodeProductsXml.Attributes["routeIndicator"].Value);
+                    }
+                    if (templateNodeProductsXml.Attributes["dymoProduct"] != null)
+                    {
+                        valueElement.SetAttribute("dymoProduct", templateNodeProductsXml.Attributes["dymoProduct"].Value);
+                    }
+                    if (templateNodeProductsXml.Attributes["isSupplyItem"] != null)
+                    {
+                        valueElement.SetAttribute("isSupplyItem", templateNodeProductsXml.Attributes["isSupplyItem"].Value);
+                    }
+                    if (templateNodeProductsXml.Attributes["numberOfDp2ImageNodesToRepeat"] != null)
+                    {
+                        valueElement.SetAttribute("numberOfDp2ImageNodesToRepeat", templateNodeProductsXml.Attributes["numberOfDp2ImageNodesToRepeat"].Value);
+                    }
+                    if (templateNodeProductsXml.Attributes["backLayout"] != null)
+                    {
+                        valueElement.SetAttribute("backLayout", templateNodeProductsXml.Attributes["backLayout"].Value);
+                    }
+                    if (templateNodeProductsXml.Attributes["customStartDate"] != null)
+                    {
+                        valueElement.SetAttribute("customStartDate", templateNodeProductsXml.Attributes["customStartDate"].Value);
+                    }
                     optionElement2.AppendChild(valueElement);
 
                     // some text nodes are defined by nodes in Products.xml, and others are defined by attributes in the Template node
@@ -183,31 +295,35 @@ namespace ProductsXmlTransformation
             }
 
             // add any Supply Sheet information from Products.xml
-            var xPathProductAssemblySupply = string.Format("/ProductFile/ProductAssemblySupplies/ProductAssemblySupply[@name = '{0}']", productId);
-            if (ProductsXmlDocument.SelectSingleNode(xPathProductAssemblySupply) != null)
+            var xPathProductAssemblySupplies = string.Format("/ProductFile/ProductAssemblySupplies/ProductAssemblySupply[@name = '{0}']", productId);
+            if (ProductsXmlDocument.SelectNodes(xPathProductAssemblySupplies).Count > 0)
             {
-                var productAssemblySupplyProductsXml = ProductsXmlDocument.SelectSingleNode(xPathProductAssemblySupply);
-                XmlElement supplySheetElement = doc.CreateElement("SupplySheet");
-
-                // attribute values of the ProductAssemblySupply node are used in MakeTask, ex. assemblyType
-                foreach (XmlAttribute supplyAttributeProductsXml in productAssemblySupplyProductsXml.Attributes)
+                var productAssemblySuppliesProductsXml = ProductsXmlDocument.SelectNodes(xPathProductAssemblySupplies);
+                // some products in Products.xml have multiple ProductAssemblySupply entries that depend on PaperType
+                foreach (XmlNode productAssemblySupplyProductsXml in productAssemblySuppliesProductsXml)
                 {
-                    // type attribute value is always "ProdId"
-                    if (supplyAttributeProductsXml.Name != "type")
+                    XmlElement supplySheetElement = doc.CreateElement("SupplySheet");
+
+                    // attribute values of the ProductAssemblySupply node are used in MakeTask, ex. assemblyType
+                    foreach (XmlAttribute supplyAttributeProductsXml in productAssemblySupplyProductsXml.Attributes)
                     {
-                        supplySheetElement.SetAttribute(supplyAttributeProductsXml.Name, supplyAttributeProductsXml.Value);
+                        // type attribute value is always "ProdId"
+                        if (supplyAttributeProductsXml.Name != "type")
+                        {
+                            supplySheetElement.SetAttribute(supplyAttributeProductsXml.Name, supplyAttributeProductsXml.Value);
+                        }
                     }
-                }
-                productElement.AppendChild(supplySheetElement);
+                    productElement.AppendChild(supplySheetElement);
 
-                // add values from ProductAssemblySupply/AssemblySupply nodes in Products.xml
-                foreach (XmlNode assemblySupplyProductsXml in productAssemblySupplyProductsXml.SelectNodes("AssemblySupply"))
-                {
-                    XmlElement supplySheetValue = doc.CreateElement("Value");
-                    supplySheetValue.SetAttribute("name", assemblySupplyProductsXml.Attributes["name"].Value);
-                    supplySheetValue.SetAttribute("quantity", assemblySupplyProductsXml.Attributes["quantity"].Value);
-                    supplySheetValue.SetAttribute("perImagesOrdered", assemblySupplyProductsXml.Attributes["perImagesOrdered"].Value);
-                    supplySheetElement.AppendChild(supplySheetValue);
+                    // add values from ProductAssemblySupply/AssemblySupply nodes in Products.xml
+                    foreach (XmlNode assemblySupplyProductsXml in productAssemblySupplyProductsXml.SelectNodes("AssemblySupply"))
+                    {
+                        XmlElement supplySheetValue = doc.CreateElement("Value");
+                        supplySheetValue.SetAttribute("name", assemblySupplyProductsXml.Attributes["name"].Value);
+                        supplySheetValue.SetAttribute("quantity", assemblySupplyProductsXml.Attributes["quantity"].Value);
+                        supplySheetValue.SetAttribute("perImagesOrdered", assemblySupplyProductsXml.Attributes["perImagesOrdered"].Value);
+                        supplySheetElement.AppendChild(supplySheetValue);
+                    }
                 }
             }
 
